@@ -1,4 +1,4 @@
-// VocalMaster - OPTION 1: Full Real Analysis (Advanced)
+// VocalMaster - OPTION 1: Full Real Analysis (Advanced) - CORRECTED VERSION
 // This version implements comprehensive audio feature extraction and analysis
 class VocalMaster {
     constructor() {
@@ -639,96 +639,86 @@ class VocalMaster {
         return Math.sqrt(variance) / mean; // Coefficient of variation
     }
 
-    // UPDATED: SUPER SAFE MINIMAL FIX - Generate realistic scores with silence detection and leniency
+    // CORRECTED: Strict silence detection and proper scoring (never exceeds 10/10)
     generateComprehensiveAnalysisResults(features) {
-        console.log('Generating scores from comprehensive audio features:', features);
+        console.log('🎯 Generating scores from comprehensive audio features:', features);
         
-        // Simple check: if no energy detected at all, give very low scores
-        const hasMinimalEnergy = features.overallEnergy > 0.001;
+        // STRICTER SILENCE/NOISE DETECTION
+        const hasActualSinging = this.detectActualSinging(features);
         
-        if (!hasMinimalEnergy) {
-            console.log('Very low energy detected - returning minimal scores');
-            const lowScore = 0.5 + Math.random() * 1.5; // 0.5-2.0 range
-            return {
-                pitchAccuracy: Math.round(lowScore * 10) / 10,
-                toneQuality: Math.round(lowScore * 10) / 10,
-                rhythmTiming: Math.round(lowScore * 10) / 10,
-                pitchStability: Math.round(lowScore * 10) / 10,
-                vocalClarity: Math.round(lowScore * 10) / 10,
-                dynamicRange: Math.round(lowScore * 10) / 10,
-                breathControl: Math.round(lowScore * 10) / 10,
-                noteTransitions: Math.round(lowScore * 10) / 10,
-                vibratoControl: Math.round(lowScore * 10) / 10,
-                expression: Math.round(lowScore * 10) / 10
-            };
+        if (!hasActualSinging) {
+            console.log('❌ No actual singing detected - returning near-zero scores');
+            return this.generateSilenceScores();
         }
         
-        // Your exact original scoring but with +2 bonus to make it more lenient
-        const lenientBonus = 2;
+        console.log('✅ Actual singing detected - generating fair scores');
+        
+        // CORRECTED SCORING - Apply bonus BEFORE Math.min to prevent scores > 10
+        const fairBonus = 1.5; // Gentle bonus for actual singing
         
         // Pitch Accuracy: Based on pitch detection and stability
         const pitchAccuracy = Math.min(10, Math.max(1,
-            features.pitchAnalysis.averagePitch > 0 ? 
+            (features.pitchAnalysis.averagePitch > 0 ? 
             (features.pitchAnalysis.pitchStability * 7 + 
-             (features.pitchAnalysis.pitchCount > 10 ? 2 : 0) + 1) : 2
-        )) + lenientBonus;
+             (features.pitchAnalysis.pitchCount > 10 ? 2 : 0) + 1) : 2) + fairBonus
+        ));
         
         // Tone Quality: Based on spectral characteristics and harmonics
         const toneQuality = Math.min(10, Math.max(1,
-            (features.spectralFeatures.harmonicRichness * 4) + 
+            ((features.spectralFeatures.harmonicRichness * 4) + 
             (features.spectralFeatures.brightness * 3) +
-            (features.overallEnergy > 0.01 ? 2 : 0) + 1
-        )) + lenientBonus;
+            (features.overallEnergy > 0.01 ? 2 : 0) + 1) + fairBonus
+        ));
         
         // Rhythm & Timing: Based on onset detection and regularity
         const rhythmTiming = Math.min(10, Math.max(1,
-            (features.temporalFeatures.rhythmRegularity * 5) + 
+            ((features.temporalFeatures.rhythmRegularity * 5) + 
             (features.temporalFeatures.noteOnsets > 0 ? 3 : 1) + 
-            (features.pitchAnalysis.pitchCount > 5 ? 1 : 0) + 1
-        )) + lenientBonus;
+            (features.pitchAnalysis.pitchCount > 5 ? 1 : 0) + 1) + fairBonus
+        ));
         
         // Pitch Stability: Directly from pitch analysis
         const pitchStability = Math.min(10, Math.max(1,
-            features.pitchAnalysis.pitchStability * 8 + 1
-        )) + lenientBonus;
+            (features.pitchAnalysis.pitchStability * 8 + 1) + fairBonus
+        ));
         
         // Vocal Clarity: Based on energy, spectral clarity, and consistency
         const vocalClarity = Math.min(10, Math.max(1,
-            (features.overallEnergy > 0.02 ? 4 : 1) + 
+            ((features.overallEnergy > 0.02 ? 4 : 1) + 
             (features.volumeConsistency.consistency * 3) +
-            (features.spectralFeatures.spectralCentroid > 800 ? 2 : 1) + 1
-        )) + lenientBonus;
+            (features.spectralFeatures.spectralCentroid > 800 ? 2 : 1) + 1) + fairBonus
+        ));
         
         // Dynamic Range: Based on energy variation (some variation is good)
         const dynamicRange = Math.min(10, Math.max(1,
-            6 - Math.abs(features.temporalFeatures.energyVariation - 0.3) * 10 + 2
-        )) + lenientBonus;
+            (6 - Math.abs(features.temporalFeatures.energyVariation - 0.3) * 10 + 2) + fairBonus
+        ));
         
         // Breath Control: Based on volume consistency and energy stability
         const breathControl = Math.min(10, Math.max(1,
-            features.volumeConsistency.consistency * 6 + 
-            (features.temporalFeatures.averageEnergy > 0.01 ? 2 : 0) + 1
-        )) + lenientBonus;
+            (features.volumeConsistency.consistency * 6 + 
+            (features.temporalFeatures.averageEnergy > 0.01 ? 2 : 0) + 1) + fairBonus
+        ));
         
         // Note Transitions: Based on pitch stability and spectral consistency
         const noteTransitions = Math.min(10, Math.max(1,
-            (features.pitchAnalysis.pitchStability * 4) + 
+            ((features.pitchAnalysis.pitchStability * 4) + 
             (features.temporalFeatures.rhythmRegularity * 3) +
-            (features.spectralFeatures.harmonicRichness * 2) + 1
-        )) + lenientBonus;
+            (features.spectralFeatures.harmonicRichness * 2) + 1) + fairBonus
+        ));
         
         // Vibrato Control: Based on controlled pitch variation
         const vibratoControl = Math.min(10, Math.max(1,
-            features.pitchAnalysis.averagePitch > 0 ?
-            Math.max(1, 7 - Math.abs(features.pitchAnalysis.pitchVariation / (features.pitchAnalysis.averagePitch || 100) - 0.02) * 100) : 5
-        )) + lenientBonus;
+            (features.pitchAnalysis.averagePitch > 0 ?
+            Math.max(1, 7 - Math.abs(features.pitchAnalysis.pitchVariation / (features.pitchAnalysis.averagePitch || 100) - 0.02) * 100) : 5) + fairBonus
+        ));
         
         // Expression: Based on dynamic range and harmonic variation
         const expression = Math.min(10, Math.max(1,
-            (features.temporalFeatures.energyVariation * 4) + 
+            ((features.temporalFeatures.energyVariation * 4) + 
             (features.spectralFeatures.brightness * 3) +
-            (features.pitchAnalysis.pitchRange > 50 ? 2 : 0) + 1
-        )) + lenientBonus;
+            (features.pitchAnalysis.pitchRange > 50 ? 2 : 0) + 1) + fairBonus
+        ));
 
         return {
             pitchAccuracy: Math.round(pitchAccuracy * 10) / 10,
@@ -741,6 +731,58 @@ class VocalMaster {
             noteTransitions: Math.round(noteTransitions * 10) / 10,
             vibratoControl: Math.round(vibratoControl * 10) / 10,
             expression: Math.round(expression * 10) / 10
+        };
+    }
+
+    // STRICTER: Detect actual singing vs silence/background noise
+    detectActualSinging(features) {
+        console.log('🔍 Checking for actual singing vs noise/silence...');
+        
+        // MUCH STRICTER thresholds
+        const hasStrongEnergy = features.overallEnergy > 0.008; // 8x stricter than before
+        const hasManyPitches = features.pitchAnalysis.pitchCount > 8; // Must have sustained pitching
+        const hasHumanPitch = features.pitchAnalysis.averagePitch > 100 && features.pitchAnalysis.averagePitch < 800;
+        const hasGoodSpectral = features.spectralFeatures.spectralCentroid > 400;
+        const hasVocalActivity = features.temporalFeatures.noteOnsets > 1;
+        const hasPitchStability = features.pitchAnalysis.pitchStability > 0.2; // Some pitch consistency required
+        
+        console.log('🎵 Strict singing detection:', {
+            hasStrongEnergy: `${hasStrongEnergy} (${features.overallEnergy.toFixed(4)})`,
+            hasManyPitches: `${hasManyPitches} (${features.pitchAnalysis.pitchCount} pitches)`,
+            hasHumanPitch: `${hasHumanPitch} (${features.pitchAnalysis.averagePitch.toFixed(1)}Hz)`,
+            hasGoodSpectral: `${hasGoodSpectral} (${features.spectralFeatures.spectralCentroid.toFixed(1)}Hz)`,
+            hasVocalActivity: `${hasVocalActivity} (${features.temporalFeatures.noteOnsets} onsets)`,
+            hasPitchStability: `${hasPitchStability} (${features.pitchAnalysis.pitchStability.toFixed(3)})`
+        });
+        
+        // Need at least 4 of these 6 indicators for actual singing
+        const indicators = [hasStrongEnergy, hasManyPitches, hasHumanPitch, hasGoodSpectral, hasVocalActivity, hasPitchStability];
+        const positiveIndicators = indicators.filter(Boolean).length;
+        
+        const isSinging = positiveIndicators >= 4;
+        console.log(`🎤 Decision: ${isSinging ? '✅ REAL SINGING' : '❌ SILENCE/NOISE'} (${positiveIndicators}/6 indicators)`);
+        
+        return isSinging;
+    }
+
+    // Near-zero scores for silence/background noise
+    generateSilenceScores() {
+        console.log('🔇 Generating near-zero scores for silence/noise');
+        
+        // Very low scores (0.1-0.8 range)
+        const lowScore = 0.1 + Math.random() * 0.7;
+        
+        return {
+            pitchAccuracy: Math.round(lowScore * 10) / 10,
+            toneQuality: Math.round(lowScore * 10) / 10,
+            rhythmTiming: Math.round(lowScore * 10) / 10,
+            pitchStability: Math.round(lowScore * 10) / 10,
+            vocalClarity: Math.round(lowScore * 10) / 10,
+            dynamicRange: Math.round(lowScore * 10) / 10,
+            breathControl: Math.round(lowScore * 10) / 10,
+            noteTransitions: Math.round(lowScore * 10) / 10,
+            vibratoControl: Math.round(lowScore * 10) / 10,
+            expression: Math.round(lowScore * 10) / 10
         };
     }
 
@@ -919,7 +961,7 @@ class VocalMaster {
                 headers: { 
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(payload)
+                body: JSON.JSON.stringify(payload)
             });
 
             console.log('Save response status:', response.status);
