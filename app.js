@@ -442,21 +442,55 @@ class VocalMaster {
         return item;
     }
 
-    // FIXED SAVE RESULTS METHOD
+    // FIXED SAVE RESULTS METHOD WITH DUPLICATE PREVENTION
     async saveResults() {
         console.log('Save Results clicked - attempting to save');
         
+        // Find the save button to prevent multiple saves
+        const saveButton = document.getElementById('confirmSave') || document.querySelector('button[onclick*="save"]') || document.querySelector('.save-btn');
+        
+        // Prevent multiple saves
+        if (saveButton && saveButton.disabled) {
+            console.log('Save already in progress, ignoring click');
+            return;
+        }
+        
+        // Disable button and show loading state
+        if (saveButton) {
+            saveButton.disabled = true;
+            const originalText = saveButton.textContent;
+            saveButton.textContent = 'Saving...';
+            
+            // Re-enable button after operation completes
+            const resetButton = () => {
+                saveButton.disabled = false;
+                saveButton.textContent = originalText;
+            };
+            
+            // Auto-reset after 10 seconds as failsafe
+            setTimeout(resetButton, 10000);
+        }
+        
         try {
-            const phoneInput = document.getElementById('phoneInput');
+            // FIXED: Use correct phone input ID
+            const phoneInput = document.getElementById('phoneNumber');
             if (!phoneInput) {
-                console.error('Phone input field not found');
+                console.error('Phone input field with ID "phoneNumber" not found');
                 alert('Phone input field not found. Please try again.');
+                if (saveButton) {
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'Save Progress';
+                }
                 return;
             }
 
             const phoneNumber = phoneInput.value.trim();
             if (!phoneNumber) {
                 alert('Please enter a phone number to save your results.');
+                if (saveButton) {
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'Save Progress';
+                }
                 return;
             }
 
@@ -522,9 +556,16 @@ class VocalMaster {
                 console.error('Save failed:', result);
                 alert(`Failed to save results: ${result.error || 'Unknown error'}`);
             }
+            
         } catch (error) {
             console.error('Save Results error:', error);
             alert('An error occurred while saving. Please check your internet connection and try again.');
+        } finally {
+            // Re-enable button
+            if (saveButton) {
+                saveButton.disabled = false;
+                saveButton.textContent = 'Save Progress';
+            }
         }
     }
 
@@ -683,7 +724,7 @@ class VocalMaster {
             modal.style.display = 'block';
             
             // Pre-fill phone number if previously saved
-            const phoneInput = document.getElementById('phoneInput');
+            const phoneInput = document.getElementById('phoneNumber');
             if (phoneInput && this.userPhone) {
                 phoneInput.value = this.userPhone;
             }
