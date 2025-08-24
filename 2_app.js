@@ -1,5 +1,7 @@
-// VocalMaster - OPTION 3: Hybrid Approach (Simple + Real Audio Characteristics)
-// This version uses basic audio characteristics with controlled randomness
+// VocalMaster - OPTION 2: Simple Analysis with Meyda.js (Intermediate)
+// This version requires: npm install meyda
+// Include Meyda script in your HTML: <script src="https://unpkg.com/meyda@5.6.2/dist/web/meyda.min.js"></script>
+
 class VocalMaster {
     constructor() {
         this.audioContext = null;
@@ -62,6 +64,16 @@ class VocalMaster {
         this.setupEventListeners();
         await this.initializeAudioContext();
         this.setupWaveformVisualization();
+        
+        // Check if Meyda is available
+        if (typeof Meyda === 'undefined') {
+            console.warn('Meyda.js not found - falling back to basic analysis');
+            this.meydaAvailable = false;
+        } else {
+            console.log('Meyda.js loaded successfully');
+            this.meydaAvailable = true;
+        }
+        
         console.log('App initialized successfully');
     }
 
@@ -327,9 +339,9 @@ class VocalMaster {
         }
     }
 
-    // OPTION 3: HYBRID APPROACH - Real audio characteristics with controlled variation
+    // OPTION 2: MEYDA.JS ANALYSIS - Simple library-based real audio analysis
     async analyzeAudio() {
-        console.log('Starting HYBRID audio analysis...');
+        console.log('Starting MEYDA audio analysis...');
         try {
             // Create audio blob and URL for playback
             const audioBlob = new Blob(this.recordingData, { type: 'audio/webm' });
@@ -337,8 +349,13 @@ class VocalMaster {
             this.audioElement = new Audio(audioUrl);
             console.log('Audio blob created, size:', audioBlob.size);
 
-            // Extract basic audio characteristics
-            const audioCharacteristics = await this.extractBasicAudioCharacteristics(audioBlob);
+            // Decode audio for analysis
+            const audioBuffer = await this.decodeAudioData(audioBlob);
+            
+            // Extract features using Meyda.js
+            const audioFeatures = this.meydaAvailable ? 
+                await this.extractMeydaFeatures(audioBuffer) : 
+                await this.extractBasicFeatures(audioBuffer);
 
             // Simulate realistic analysis progress
             const progressSteps = [
@@ -351,82 +368,203 @@ class VocalMaster {
             ];
 
             for (let i = 0; i < progressSteps.length; i++) {
-                await this.delay(600 + Math.random() * 400); // 600-1000ms per step
+                await this.delay(600 + Math.random() * 400);
                 const progress = ((i + 1) / progressSteps.length) * 100;
                 document.getElementById('analysisProgress').style.width = `${progress}%`;
                 document.getElementById('analysisStatus').textContent = progressSteps[i];
                 console.log(`Analysis step ${i + 1}: ${progressSteps[i]}`);
             }
 
-            // Generate hybrid analysis results
-            this.analysisResults = this.generateHybridAnalysisResults(audioCharacteristics);
-            console.log('Hybrid Analysis complete:', this.analysisResults);
+            // Generate analysis results based on Meyda features
+            this.analysisResults = this.generateMeydaAnalysisResults(audioFeatures);
+            console.log('Meyda Analysis complete:', this.analysisResults);
         } catch (error) {
             console.error('Analysis failed:', error);
             throw error;
         }
     }
 
-    // Extract basic audio characteristics for scoring
-    async extractBasicAudioCharacteristics(audioBlob) {
-        const duration = this.recordingDuration / 1000; // seconds
-        const dataSize = audioBlob.size;
-        
-        // Calculate basic quality indicators
-        const qualityScore = Math.min(1, dataSize / 200000); // 0-1 based on rich audio data
-        const durationScore = Math.min(1, Math.max(0.3, duration / 15)); // 0.3-1 based on duration
-        const consistencyScore = Math.random() * 0.3 + 0.7; // Simulated consistency 0.7-1
-        
-        console.log('Audio characteristics:', {
-            duration: duration.toFixed(1) + 's',
-            dataSize: (dataSize / 1024).toFixed(1) + 'KB',
-            qualityScore: qualityScore.toFixed(2),
-            durationScore: durationScore.toFixed(2)
-        });
+    // Convert audio blob to AudioBuffer for analysis
+    async decodeAudioData(audioBlob) {
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        return await audioContext.decodeAudioData(arrayBuffer);
+    }
 
+    // Extract audio features using Meyda.js library
+    async extractMeydaFeatures(audioBuffer) {
+        console.log('Extracting features using Meyda.js');
+        const channelData = audioBuffer.getChannelData(0);
+        const frameSize = 1024;
+        const hopSize = 512;
+        
+        const features = {
+            rms: [],
+            spectralCentroid: [],
+            spectralRolloff: [],
+            zcr: [],
+            mfcc: [],
+            chroma: []
+        };
+
+        // Extract features frame by frame
+        for (let i = 0; i < channelData.length - frameSize; i += hopSize) {
+            const frame = channelData.slice(i, i + frameSize);
+            
+            try {
+                const frameFeatures = Meyda.extract([
+                    'rms', 
+                    'spectralCentroid', 
+                    'spectralRolloff',
+                    'zcr',
+                    'mfcc',
+                    'chroma'
+                ], frame);
+
+                if (frameFeatures) {
+                    features.rms.push(frameFeatures.rms || 0);
+                    features.spectralCentroid.push(frameFeatures.spectralCentroid || 0);
+                    features.spectralRolloff.push(frameFeatures.spectralRolloff || 0);
+                    features.zcr.push(frameFeatures.zcr || 0);
+                    if (frameFeatures.mfcc) features.mfcc.push(frameFeatures.mfcc);
+                    if (frameFeatures.chroma) features.chroma.push(frameFeatures.chroma);
+                }
+            } catch (e) {
+                console.warn('Error extracting frame features:', e);
+            }
+        }
+
+        // Calculate averages and statistics
         return {
-            duration,
-            dataSize,
-            qualityScore,
-            durationScore,
-            consistencyScore
+            averageRMS: this.average(features.rms),
+            rmsStability: this.calculateStability(features.rms),
+            averageSpectralCentroid: this.average(features.spectralCentroid),
+            spectralCentroidStability: this.calculateStability(features.spectralCentroid),
+            averageSpectralRolloff: this.average(features.spectralRolloff),
+            averageZCR: this.average(features.zcr),
+            zcrStability: this.calculateStability(features.zcr),
+            duration: audioBuffer.duration,
+            sampleRate: audioBuffer.sampleRate
         };
     }
 
-    // Generate scores based on audio characteristics + controlled variation
-    generateHybridAnalysisResults(characteristics) {
-        console.log('Generating hybrid scores from audio characteristics');
+    // Basic feature extraction if Meyda is not available
+    async extractBasicFeatures(audioBuffer) {
+        console.log('Extracting basic features (Meyda not available)');
+        const channelData = audioBuffer.getChannelData(0);
         
-        // Calculate base score from real audio characteristics
-        let baseScore = 3; // Start at 3/10
-        
-        // Adjust based on recording quality
-        baseScore += characteristics.qualityScore * 3; // +0 to +3 points
-        baseScore += characteristics.durationScore * 2; // +0.6 to +2 points
-        baseScore += characteristics.consistencyScore * 1.5; // +1.05 to +1.5 points
-        
-        // Ensure baseScore is between 3-9
-        baseScore = Math.max(3, Math.min(9, baseScore));
-        
-        console.log('Calculated base score:', baseScore.toFixed(2));
-        
-        // Add controlled variation for each parameter
-        const variation = () => (Math.random() - 0.5) * 1.5; // ±0.75 variation
-        
-        // Generate scores with some correlation (good singers are good at multiple things)
-        const correlationFactor = Math.random() * 0.3 - 0.15; // ±0.15 correlation
+        // Simple RMS calculation
+        let rmsSum = 0;
+        for (let i = 0; i < channelData.length; i++) {
+            rmsSum += channelData[i] * channelData[i];
+        }
+        const averageRMS = Math.sqrt(rmsSum / channelData.length);
         
         return {
-            pitchAccuracy: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor)),
-            toneQuality: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.8)),
-            rhythmTiming: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.6)),
-            pitchStability: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.9)),
-            vocalClarity: Math.max(1, Math.min(10, baseScore + variation() + (characteristics.qualityScore * 2))),
-            dynamicRange: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.5)),
-            breathControl: Math.max(1, Math.min(10, baseScore + variation() + (characteristics.durationScore * 1.5))),
-            noteTransitions: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.7)),
-            vibratoControl: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.4)),
-            expression: Math.max(1, Math.min(10, baseScore + variation() + (characteristics.consistencyScore * 2)))
+            averageRMS,
+            rmsStability: 0.7, // Default stability
+            averageSpectralCentroid: 1000, // Default centroid
+            spectralCentroidStability: 0.6,
+            averageSpectralRolloff: 3000,
+            averageZCR: 0.1,
+            zcrStability: 0.5,
+            duration: audioBuffer.duration,
+            sampleRate: audioBuffer.sampleRate
+        };
+    }
+
+    // Calculate average of array
+    average(arr) {
+        if (!arr || arr.length === 0) return 0;
+        return arr.reduce((sum, val) => sum + (val || 0), 0) / arr.length;
+    }
+
+    // Calculate stability (inverse of coefficient of variation)
+    calculateStability(arr) {
+        if (!arr || arr.length === 0) return 0;
+        const avg = this.average(arr);
+        if (avg === 0) return 0;
+        
+        const variance = arr.reduce((sum, val) => sum + Math.pow((val || 0) - avg, 2), 0) / arr.length;
+        const stdDev = Math.sqrt(variance);
+        const cv = stdDev / avg;
+        
+        return Math.max(0, 1 - cv); // Higher stability = lower coefficient of variation
+    }
+
+    // Generate realistic scores based on Meyda features
+    generateMeydaAnalysisResults(features) {
+        console.log('Generating scores from Meyda features:', features);
+        
+        // Normalize features to 0-10 scale
+        const baseScore = Math.min(10, Math.max(1, 3 + (features.averageRMS * 50)));
+        
+        // Pitch Accuracy: Based on spectral stability
+        const pitchAccuracy = Math.min(10, Math.max(1,
+            (features.spectralCentroidStability * 8) + 
+            (features.averageSpectralCentroid > 500 ? 2 : 0)
+        ));
+        
+        // Tone Quality: Based on spectral centroid (brightness)
+        const toneQuality = Math.min(10, Math.max(1,
+            (features.averageSpectralCentroid / 2000) * 6 + 
+            (features.averageRMS > 0.02 ? 3 : 1) + 1
+        ));
+        
+        // Rhythm & Timing: Based on RMS stability
+        const rhythmTiming = Math.min(10, Math.max(1,
+            (features.rmsStability * 7) + 2
+        ));
+        
+        // Pitch Stability: Directly from spectral centroid stability
+        const pitchStability = Math.min(10, Math.max(1,
+            (features.spectralCentroidStability * 9) + 1
+        ));
+        
+        // Vocal Clarity: Based on RMS level and ZCR
+        const vocalClarity = Math.min(10, Math.max(1,
+            (features.averageRMS > 0.01 ? 5 : 2) +
+            (1 - features.averageZCR) * 4 + 1
+        ));
+        
+        // Dynamic Range: Based on RMS variation (some variation is good)
+        const dynamicRange = Math.min(10, Math.max(1,
+            baseScore + (1 - features.rmsStability) * 2
+        ));
+        
+        // Breath Control: Based on RMS stability
+        const breathControl = Math.min(10, Math.max(1,
+            (features.rmsStability * 8) + 1
+        ));
+        
+        // Note Transitions: Based on spectral rolloff consistency
+        const noteTransitions = Math.min(10, Math.max(1,
+            (features.averageSpectralRolloff / 5000) * 5 +
+            (features.spectralCentroidStability * 4) + 1
+        ));
+        
+        // Vibrato Control: Based on moderate spectral variation
+        const vibratoControl = Math.min(10, Math.max(1,
+            baseScore + (features.spectralCentroidStability * 2) - 1
+        ));
+        
+        // Expression: Based on dynamic variation and spectral richness
+        const expression = Math.min(10, Math.max(1,
+            (1 - features.rmsStability) * 3 +
+            (features.averageSpectralCentroid / 1500) * 4 + 2
+        ));
+
+        return {
+            pitchAccuracy: Math.round(pitchAccuracy * 10) / 10,
+            toneQuality: Math.round(toneQuality * 10) / 10,
+            rhythmTiming: Math.round(rhythmTiming * 10) / 10,
+            pitchStability: Math.round(pitchStability * 10) / 10,
+            vocalClarity: Math.round(vocalClarity * 10) / 10,
+            dynamicRange: Math.round(dynamicRange * 10) / 10,
+            breathControl: Math.round(breathControl * 10) / 10,
+            noteTransitions: Math.round(noteTransitions * 10) / 10,
+            vibratoControl: Math.round(vibratoControl * 10) / 10,
+            expression: Math.round(expression * 10) / 10
         };
     }
 

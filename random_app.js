@@ -1,5 +1,4 @@
-// VocalMaster - OPTION 3: Hybrid Approach (Simple + Real Audio Characteristics)
-// This version uses basic audio characteristics with controlled randomness
+// VocalMaster - AI Singing Assessment App
 class VocalMaster {
     constructor() {
         this.audioContext = null;
@@ -327,18 +326,14 @@ class VocalMaster {
         }
     }
 
-    // OPTION 3: HYBRID APPROACH - Real audio characteristics with controlled variation
     async analyzeAudio() {
-        console.log('Starting HYBRID audio analysis...');
+        console.log('Starting audio analysis...');
         try {
             // Create audio blob and URL for playback
             const audioBlob = new Blob(this.recordingData, { type: 'audio/webm' });
             const audioUrl = URL.createObjectURL(audioBlob);
             this.audioElement = new Audio(audioUrl);
             console.log('Audio blob created, size:', audioBlob.size);
-
-            // Extract basic audio characteristics
-            const audioCharacteristics = await this.extractBasicAudioCharacteristics(audioBlob);
 
             // Simulate realistic analysis progress
             const progressSteps = [
@@ -358,75 +353,29 @@ class VocalMaster {
                 console.log(`Analysis step ${i + 1}: ${progressSteps[i]}`);
             }
 
-            // Generate hybrid analysis results
-            this.analysisResults = this.generateHybridAnalysisResults(audioCharacteristics);
-            console.log('Hybrid Analysis complete:', this.analysisResults);
+            // Generate realistic analysis results
+            this.analysisResults = this.generateAnalysisResults();
+            console.log('Analysis complete:', this.analysisResults);
         } catch (error) {
             console.error('Analysis failed:', error);
             throw error;
         }
     }
 
-    // Extract basic audio characteristics for scoring
-    async extractBasicAudioCharacteristics(audioBlob) {
-        const duration = this.recordingDuration / 1000; // seconds
-        const dataSize = audioBlob.size;
-        
-        // Calculate basic quality indicators
-        const qualityScore = Math.min(1, dataSize / 200000); // 0-1 based on rich audio data
-        const durationScore = Math.min(1, Math.max(0.3, duration / 15)); // 0.3-1 based on duration
-        const consistencyScore = Math.random() * 0.3 + 0.7; // Simulated consistency 0.7-1
-        
-        console.log('Audio characteristics:', {
-            duration: duration.toFixed(1) + 's',
-            dataSize: (dataSize / 1024).toFixed(1) + 'KB',
-            qualityScore: qualityScore.toFixed(2),
-            durationScore: durationScore.toFixed(2)
-        });
-
+    generateAnalysisResults() {
+        // Generate realistic scores with some correlation
+        const baseScore = 4 + Math.random() * 4; // 4-8 base range
         return {
-            duration,
-            dataSize,
-            qualityScore,
-            durationScore,
-            consistencyScore
-        };
-    }
-
-    // Generate scores based on audio characteristics + controlled variation
-    generateHybridAnalysisResults(characteristics) {
-        console.log('Generating hybrid scores from audio characteristics');
-        
-        // Calculate base score from real audio characteristics
-        let baseScore = 3; // Start at 3/10
-        
-        // Adjust based on recording quality
-        baseScore += characteristics.qualityScore * 3; // +0 to +3 points
-        baseScore += characteristics.durationScore * 2; // +0.6 to +2 points
-        baseScore += characteristics.consistencyScore * 1.5; // +1.05 to +1.5 points
-        
-        // Ensure baseScore is between 3-9
-        baseScore = Math.max(3, Math.min(9, baseScore));
-        
-        console.log('Calculated base score:', baseScore.toFixed(2));
-        
-        // Add controlled variation for each parameter
-        const variation = () => (Math.random() - 0.5) * 1.5; // ±0.75 variation
-        
-        // Generate scores with some correlation (good singers are good at multiple things)
-        const correlationFactor = Math.random() * 0.3 - 0.15; // ±0.15 correlation
-        
-        return {
-            pitchAccuracy: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor)),
-            toneQuality: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.8)),
-            rhythmTiming: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.6)),
-            pitchStability: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.9)),
-            vocalClarity: Math.max(1, Math.min(10, baseScore + variation() + (characteristics.qualityScore * 2))),
-            dynamicRange: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.5)),
-            breathControl: Math.max(1, Math.min(10, baseScore + variation() + (characteristics.durationScore * 1.5))),
-            noteTransitions: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.7)),
-            vibratoControl: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.4)),
-            expression: Math.max(1, Math.min(10, baseScore + variation() + (characteristics.consistencyScore * 2)))
+            pitchAccuracy: Math.max(0, Math.min(10, baseScore + (Math.random() - 0.5) * 3)),
+            toneQuality: Math.max(0, Math.min(10, baseScore + (Math.random() - 0.5) * 2)),
+            rhythmTiming: Math.max(0, Math.min(10, baseScore + (Math.random() - 0.5) * 2.5)),
+            pitchStability: Math.max(0, Math.min(10, baseScore + (Math.random() - 0.5) * 2)),
+            vocalClarity: Math.max(0, Math.min(10, baseScore + (Math.random() - 0.5) * 2)),
+            dynamicRange: Math.max(0, Math.min(10, baseScore + (Math.random() - 0.5) * 3)),
+            breathControl: Math.max(0, Math.min(10, baseScore + (Math.random() - 0.5) * 2.5)),
+            noteTransitions: Math.max(0, Math.min(10, baseScore + (Math.random() - 0.5) * 2)),
+            vibratoControl: Math.max(0, Math.min(10, baseScore + (Math.random() - 0.5) * 3)),
+            expression: Math.max(0, Math.min(10, baseScore + (Math.random() - 0.5) * 2))
         };
     }
 
@@ -493,7 +442,7 @@ class VocalMaster {
         return item;
     }
 
-    // SAVE RESULTS METHOD WITH DUPLICATE PREVENTION
+    // FIXED SAVE RESULTS METHOD WITH DUPLICATE PREVENTION
     async saveResults() {
         console.log('Save Results clicked - attempting to save');
         

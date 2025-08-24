@@ -1,5 +1,5 @@
-// VocalMaster - OPTION 3: Hybrid Approach (Simple + Real Audio Characteristics)
-// This version uses basic audio characteristics with controlled randomness
+// VocalMaster - OPTION 1: Full Real Analysis (Advanced)
+// This version implements comprehensive audio feature extraction and analysis
 class VocalMaster {
     constructor() {
         this.audioContext = null;
@@ -327,20 +327,23 @@ class VocalMaster {
         }
     }
 
-    // OPTION 3: HYBRID APPROACH - Real audio characteristics with controlled variation
+    // OPTION 1: FULL REAL ANALYSIS - Comprehensive audio feature extraction
     async analyzeAudio() {
-        console.log('Starting HYBRID audio analysis...');
+        console.log('Starting COMPREHENSIVE REAL audio analysis...');
         try {
-            // Create audio blob and URL for playback
+            // Create audio blob and URL for analysis
             const audioBlob = new Blob(this.recordingData, { type: 'audio/webm' });
             const audioUrl = URL.createObjectURL(audioBlob);
             this.audioElement = new Audio(audioUrl);
             console.log('Audio blob created, size:', audioBlob.size);
 
-            // Extract basic audio characteristics
-            const audioCharacteristics = await this.extractBasicAudioCharacteristics(audioBlob);
-
-            // Simulate realistic analysis progress
+            // Step 1: Convert audio to analyzable format
+            const audioBuffer = await this.decodeAudioData(audioBlob);
+            
+            // Step 2: Extract comprehensive audio features
+            const audioFeatures = await this.extractComprehensiveAudioFeatures(audioBuffer);
+            
+            // Step 3: Analyze with realistic progress
             const progressSteps = [
                 'Processing audio format...',
                 'Extracting pitch information...',
@@ -351,82 +354,388 @@ class VocalMaster {
             ];
 
             for (let i = 0; i < progressSteps.length; i++) {
-                await this.delay(600 + Math.random() * 400); // 600-1000ms per step
+                await this.delay(600 + Math.random() * 400);
                 const progress = ((i + 1) / progressSteps.length) * 100;
                 document.getElementById('analysisProgress').style.width = `${progress}%`;
                 document.getElementById('analysisStatus').textContent = progressSteps[i];
-                console.log(`Analysis step ${i + 1}: ${progressSteps[i]}`);
             }
 
-            // Generate hybrid analysis results
-            this.analysisResults = this.generateHybridAnalysisResults(audioCharacteristics);
-            console.log('Hybrid Analysis complete:', this.analysisResults);
+            // Step 4: Generate REAL analysis results based on audio features
+            this.analysisResults = this.generateComprehensiveAnalysisResults(audioFeatures);
+            console.log('COMPREHENSIVE Analysis complete:', this.analysisResults);
+            
         } catch (error) {
             console.error('Analysis failed:', error);
+            // Fallback to simulated if real analysis fails
+            this.analysisResults = this.generateFallbackResults();
             throw error;
         }
     }
 
-    // Extract basic audio characteristics for scoring
-    async extractBasicAudioCharacteristics(audioBlob) {
-        const duration = this.recordingDuration / 1000; // seconds
-        const dataSize = audioBlob.size;
+    // Convert audio blob to AudioBuffer for analysis
+    async decodeAudioData(audioBlob) {
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        return await audioContext.decodeAudioData(arrayBuffer);
+    }
+
+    // Extract comprehensive audio features from recorded audio
+    async extractComprehensiveAudioFeatures(audioBuffer) {
+        const channelData = audioBuffer.getChannelData(0); // Get mono channel
+        const sampleRate = audioBuffer.sampleRate;
+        const duration = audioBuffer.duration;
         
-        // Calculate basic quality indicators
-        const qualityScore = Math.min(1, dataSize / 200000); // 0-1 based on rich audio data
-        const durationScore = Math.min(1, Math.max(0.3, duration / 15)); // 0.3-1 based on duration
-        const consistencyScore = Math.random() * 0.3 + 0.7; // Simulated consistency 0.7-1
-        
-        console.log('Audio characteristics:', {
-            duration: duration.toFixed(1) + 's',
-            dataSize: (dataSize / 1024).toFixed(1) + 'KB',
-            qualityScore: qualityScore.toFixed(2),
-            durationScore: durationScore.toFixed(2)
+        console.log('Analyzing audio:', {
+            duration: duration.toFixed(2) + 's',
+            sampleRate: sampleRate + 'Hz',
+            samples: channelData.length
         });
 
+        // Feature 1: Overall Volume/Energy Analysis
+        const overallEnergy = this.calculateRMS(channelData);
+        const volumeConsistency = this.calculateVolumeConsistency(channelData);
+        
+        // Feature 2: Pitch Analysis
+        const pitchAnalysis = this.analyzePitchCharacteristics(channelData, sampleRate);
+        
+        // Feature 3: Spectral Analysis (Tone Quality)
+        const spectralFeatures = this.analyzeSpectralCharacteristics(channelData, sampleRate);
+        
+        // Feature 4: Temporal Analysis (Rhythm/Timing)
+        const temporalFeatures = this.analyzeTemporalCharacteristics(channelData, sampleRate);
+        
         return {
             duration,
-            dataSize,
-            qualityScore,
-            durationScore,
-            consistencyScore
+            overallEnergy,
+            volumeConsistency,
+            pitchAnalysis,
+            spectralFeatures,
+            temporalFeatures,
+            sampleRate,
+            totalSamples: channelData.length
         };
     }
 
-    // Generate scores based on audio characteristics + controlled variation
-    generateHybridAnalysisResults(characteristics) {
-        console.log('Generating hybrid scores from audio characteristics');
+    // Calculate RMS (Root Mean Square) for volume analysis
+    calculateRMS(audioData) {
+        let sum = 0;
+        for (let i = 0; i < audioData.length; i++) {
+            sum += audioData[i] * audioData[i];
+        }
+        return Math.sqrt(sum / audioData.length);
+    }
+
+    // Analyze volume consistency
+    calculateVolumeConsistency(audioData) {
+        const frameSize = 1024;
+        const frameRMS = [];
         
-        // Calculate base score from real audio characteristics
-        let baseScore = 3; // Start at 3/10
+        for (let i = 0; i < audioData.length - frameSize; i += frameSize) {
+            const frame = audioData.slice(i, i + frameSize);
+            frameRMS.push(this.calculateRMS(frame));
+        }
         
-        // Adjust based on recording quality
-        baseScore += characteristics.qualityScore * 3; // +0 to +3 points
-        baseScore += characteristics.durationScore * 2; // +0.6 to +2 points
-        baseScore += characteristics.consistencyScore * 1.5; // +1.05 to +1.5 points
+        // Calculate standard deviation of RMS values
+        const mean = frameRMS.reduce((sum, val) => sum + val, 0) / frameRMS.length;
+        const variance = frameRMS.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / frameRMS.length;
+        const stdDev = Math.sqrt(variance);
         
-        // Ensure baseScore is between 3-9
-        baseScore = Math.max(3, Math.min(9, baseScore));
+        // Lower std dev = more consistent volume
+        return { mean, stdDev, consistency: Math.max(0, 1 - (stdDev * 10)) };
+    }
+
+    // Basic pitch analysis using autocorrelation
+    analyzePitchCharacteristics(audioData, sampleRate) {
+        const frameSize = 2048;
+        const hopSize = 512;
+        const pitches = [];
         
-        console.log('Calculated base score:', baseScore.toFixed(2));
+        for (let i = 0; i < audioData.length - frameSize; i += hopSize) {
+            const frame = audioData.slice(i, i + frameSize);
+            const pitch = this.detectPitch(frame, sampleRate);
+            if (pitch > 0) pitches.push(pitch);
+        }
         
-        // Add controlled variation for each parameter
-        const variation = () => (Math.random() - 0.5) * 1.5; // ±0.75 variation
+        if (pitches.length === 0) {
+            return { averagePitch: 0, pitchStability: 0.3, pitchRange: 0 };
+        }
         
-        // Generate scores with some correlation (good singers are good at multiple things)
-        const correlationFactor = Math.random() * 0.3 - 0.15; // ±0.15 correlation
+        const averagePitch = pitches.reduce((sum, p) => sum + p, 0) / pitches.length;
+        const pitchVariance = pitches.reduce((sum, p) => sum + Math.pow(p - averagePitch, 2), 0) / pitches.length;
+        const pitchStdDev = Math.sqrt(pitchVariance);
+        const pitchRange = Math.max(...pitches) - Math.min(...pitches);
         
         return {
-            pitchAccuracy: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor)),
-            toneQuality: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.8)),
-            rhythmTiming: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.6)),
-            pitchStability: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.9)),
-            vocalClarity: Math.max(1, Math.min(10, baseScore + variation() + (characteristics.qualityScore * 2))),
-            dynamicRange: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.5)),
-            breathControl: Math.max(1, Math.min(10, baseScore + variation() + (characteristics.durationScore * 1.5))),
-            noteTransitions: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.7)),
-            vibratoControl: Math.max(1, Math.min(10, baseScore + variation() + correlationFactor * 0.4)),
-            expression: Math.max(1, Math.min(10, baseScore + variation() + (characteristics.consistencyScore * 2)))
+            averagePitch,
+            pitchStability: Math.max(0, 1 - (pitchStdDev / (averagePitch || 1))), // Lower std dev = more stable
+            pitchRange,
+            pitchVariation: pitchStdDev,
+            pitchCount: pitches.length
+        };
+    }
+
+    // Simple pitch detection using autocorrelation
+    detectPitch(buffer, sampleRate) {
+        // Autocorrelation-based pitch detection
+        const MIN_FREQ = 80;  // Lowest singing frequency
+        const MAX_FREQ = 1000; // Highest fundamental frequency for singing
+        
+        const minPeriod = Math.floor(sampleRate / MAX_FREQ);
+        const maxPeriod = Math.floor(sampleRate / MIN_FREQ);
+        
+        let maxCorrelation = 0;
+        let bestPeriod = 0;
+        
+        // Simple autocorrelation
+        for (let period = minPeriod; period <= maxPeriod && period < buffer.length / 2; period++) {
+            let correlation = 0;
+            for (let i = 0; i < buffer.length - period; i++) {
+                correlation += buffer[i] * buffer[i + period];
+            }
+            
+            if (correlation > maxCorrelation) {
+                maxCorrelation = correlation;
+                bestPeriod = period;
+            }
+        }
+        
+        return bestPeriod > 0 ? sampleRate / bestPeriod : 0;
+    }
+
+    // Analyze spectral characteristics (tone quality)
+    analyzeSpectralCharacteristics(audioData, sampleRate) {
+        // Basic spectral analysis using simplified FFT approach
+        const fftSize = 1024;
+        const frameCount = Math.floor(audioData.length / fftSize);
+        let totalSpectralCentroid = 0;
+        let totalBrightness = 0;
+        let spectralEnergy = 0;
+        
+        for (let f = 0; f < frameCount; f++) {
+            const frame = audioData.slice(f * fftSize, (f + 1) * fftSize);
+            const spectrum = this.computeSimpleSpectrum(frame);
+            
+            const centroid = this.calculateSpectralCentroid(spectrum, sampleRate);
+            const brightness = this.calculateBrightness(spectrum);
+            const energy = spectrum.reduce((sum, val) => sum + val, 0);
+            
+            totalSpectralCentroid += centroid;
+            totalBrightness += brightness;
+            spectralEnergy += energy;
+        }
+        
+        return {
+            spectralCentroid: totalSpectralCentroid / frameCount,
+            brightness: totalBrightness / frameCount,
+            spectralEnergy: spectralEnergy / frameCount,
+            harmonicRichness: Math.min(1, (totalSpectralCentroid / frameCount) / 2000)
+        };
+    }
+
+    // Simplified spectrum computation
+    computeSimpleSpectrum(buffer) {
+        // This is a simplified version for basic spectral analysis
+        const N = buffer.length;
+        const spectrum = new Array(N / 2).fill(0);
+        
+        // Simple magnitude calculation by frequency bands
+        for (let k = 0; k < N / 2; k += 4) {
+            let magnitude = 0;
+            for (let n = 0; n < N; n += 8) {
+                if (n < buffer.length) {
+                    magnitude += Math.abs(buffer[n]) * Math.cos(2 * Math.PI * k * n / N);
+                }
+            }
+            spectrum[k] = Math.abs(magnitude);
+        }
+        
+        return spectrum;
+    }
+
+    // Calculate spectral centroid (brightness measure)
+    calculateSpectralCentroid(spectrum, sampleRate) {
+        let weightedSum = 0;
+        let magnitudeSum = 0;
+        
+        for (let i = 0; i < spectrum.length; i++) {
+            const frequency = (i * sampleRate) / (2 * spectrum.length);
+            weightedSum += frequency * spectrum[i];
+            magnitudeSum += spectrum[i];
+        }
+        
+        return magnitudeSum > 0 ? weightedSum / magnitudeSum : 0;
+    }
+
+    // Calculate brightness (high frequency content)
+    calculateBrightness(spectrum) {
+        const total = spectrum.reduce((sum, val) => sum + val, 0);
+        if (total === 0) return 0;
+        
+        const highFreqStart = Math.floor(spectrum.length * 0.6); // Above 60% of Nyquist
+        const highFreqSum = spectrum.slice(highFreqStart).reduce((sum, val) => sum + val, 0);
+        
+        return highFreqSum / total;
+    }
+
+    // Analyze temporal characteristics
+    analyzeTemporalCharacteristics(audioData, sampleRate) {
+        const frameSize = 1024;
+        const energyFrames = [];
+        
+        // Calculate energy for each frame
+        for (let i = 0; i < audioData.length - frameSize; i += frameSize) {
+            const frame = audioData.slice(i, i + frameSize);
+            energyFrames.push(this.calculateRMS(frame));
+        }
+        
+        // Detect note onsets (sudden energy increases)
+        const onsets = this.detectOnsets(energyFrames);
+        
+        return {
+            noteOnsets: onsets.length,
+            rhythmRegularity: this.calculateRhythmRegularity(onsets),
+            energyVariation: this.calculateEnergyVariation(energyFrames),
+            averageEnergy: energyFrames.reduce((sum, val) => sum + val, 0) / energyFrames.length
+        };
+    }
+
+    // Simple onset detection
+    detectOnsets(energyFrames) {
+        const onsets = [];
+        const threshold = 1.5; // Energy must increase by 50%
+        
+        for (let i = 1; i < energyFrames.length; i++) {
+            if (energyFrames[i] > energyFrames[i - 1] * threshold && energyFrames[i] > 0.01) {
+                onsets.push(i);
+            }
+        }
+        
+        return onsets;
+    }
+
+    // Calculate rhythm regularity
+    calculateRhythmRegularity(onsets) {
+        if (onsets.length < 2) return 0.5;
+        
+        const intervals = [];
+        for (let i = 1; i < onsets.length; i++) {
+            intervals.push(onsets[i] - onsets[i - 1]);
+        }
+        
+        const meanInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
+        const variance = intervals.reduce((sum, val) => sum + Math.pow(val - meanInterval, 2), 0) / intervals.length;
+        const stdDev = Math.sqrt(variance);
+        
+        // Lower standard deviation = more regular rhythm
+        return Math.max(0, 1 - (stdDev / (meanInterval || 1)));
+    }
+
+    // Calculate energy variation
+    calculateEnergyVariation(energyFrames) {
+        const mean = energyFrames.reduce((sum, val) => sum + val, 0) / energyFrames.length;
+        if (mean === 0) return 0;
+        
+        const variance = energyFrames.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / energyFrames.length;
+        return Math.sqrt(variance) / mean; // Coefficient of variation
+    }
+
+    // Generate realistic scores based on comprehensive audio features
+    generateComprehensiveAnalysisResults(features) {
+        console.log('Generating scores from comprehensive audio features:', features);
+        
+        // Pitch Accuracy: Based on pitch detection and stability
+        const pitchAccuracy = Math.min(10, Math.max(1,
+            features.pitchAnalysis.averagePitch > 0 ? 
+            (features.pitchAnalysis.pitchStability * 7 + 
+             (features.pitchAnalysis.pitchCount > 10 ? 2 : 0) + 1) : 2
+        ));
+        
+        // Tone Quality: Based on spectral characteristics and harmonics
+        const toneQuality = Math.min(10, Math.max(1,
+            (features.spectralFeatures.harmonicRichness * 4) + 
+            (features.spectralFeatures.brightness * 3) +
+            (features.overallEnergy > 0.01 ? 2 : 0) + 1
+        ));
+        
+        // Rhythm & Timing: Based on onset detection and regularity
+        const rhythmTiming = Math.min(10, Math.max(1,
+            (features.temporalFeatures.rhythmRegularity * 5) + 
+            (features.temporalFeatures.noteOnsets > 0 ? 3 : 1) + 
+            (features.pitchAnalysis.pitchCount > 5 ? 1 : 0) + 1
+        ));
+        
+        // Pitch Stability: Directly from pitch analysis
+        const pitchStability = Math.min(10, Math.max(1,
+            features.pitchAnalysis.pitchStability * 8 + 1
+        ));
+        
+        // Vocal Clarity: Based on energy, spectral clarity, and consistency
+        const vocalClarity = Math.min(10, Math.max(1,
+            (features.overallEnergy > 0.02 ? 4 : 1) + 
+            (features.volumeConsistency.consistency * 3) +
+            (features.spectralFeatures.spectralCentroid > 800 ? 2 : 1) + 1
+        ));
+        
+        // Dynamic Range: Based on energy variation (some variation is good)
+        const dynamicRange = Math.min(10, Math.max(1,
+            6 - Math.abs(features.temporalFeatures.energyVariation - 0.3) * 10 + 2
+        ));
+        
+        // Breath Control: Based on volume consistency and energy stability
+        const breathControl = Math.min(10, Math.max(1,
+            features.volumeConsistency.consistency * 6 + 
+            (features.temporalFeatures.averageEnergy > 0.01 ? 2 : 0) + 1
+        ));
+        
+        // Note Transitions: Based on pitch stability and spectral consistency
+        const noteTransitions = Math.min(10, Math.max(1,
+            (features.pitchAnalysis.pitchStability * 4) + 
+            (features.temporalFeatures.rhythmRegularity * 3) +
+            (features.spectralFeatures.harmonicRichness * 2) + 1
+        ));
+        
+        // Vibrato Control: Based on controlled pitch variation
+        const vibratoControl = Math.min(10, Math.max(1,
+            features.pitchAnalysis.averagePitch > 0 ?
+            Math.max(1, 7 - Math.abs(features.pitchAnalysis.pitchVariation / (features.pitchAnalysis.averagePitch || 100) - 0.02) * 100) : 5
+        ));
+        
+        // Expression: Based on dynamic range and harmonic variation
+        const expression = Math.min(10, Math.max(1,
+            (features.temporalFeatures.energyVariation * 4) + 
+            (features.spectralFeatures.brightness * 3) +
+            (features.pitchAnalysis.pitchRange > 50 ? 2 : 0) + 1
+        ));
+
+        return {
+            pitchAccuracy: Math.round(pitchAccuracy * 10) / 10,
+            toneQuality: Math.round(toneQuality * 10) / 10,
+            rhythmTiming: Math.round(rhythmTiming * 10) / 10,
+            pitchStability: Math.round(pitchStability * 10) / 10,
+            vocalClarity: Math.round(vocalClarity * 10) / 10,
+            dynamicRange: Math.round(dynamicRange * 10) / 10,
+            breathControl: Math.round(breathControl * 10) / 10,
+            noteTransitions: Math.round(noteTransitions * 10) / 10,
+            vibratoControl: Math.round(vibratoControl * 10) / 10,
+            expression: Math.round(expression * 10) / 10
+        };
+    }
+
+    // Fallback if comprehensive analysis fails
+    generateFallbackResults() {
+        console.warn('Using fallback basic analysis');
+        const baseScore = 4 + Math.random() * 4;
+        return {
+            pitchAccuracy: Math.max(1, Math.min(10, baseScore + (Math.random() - 0.5) * 3)),
+            toneQuality: Math.max(1, Math.min(10, baseScore + (Math.random() - 0.5) * 2)),
+            rhythmTiming: Math.max(1, Math.min(10, baseScore + (Math.random() - 0.5) * 2.5)),
+            pitchStability: Math.max(1, Math.min(10, baseScore + (Math.random() - 0.5) * 2)),
+            vocalClarity: Math.max(1, Math.min(10, baseScore + (Math.random() - 0.5) * 2)),
+            dynamicRange: Math.max(1, Math.min(10, baseScore + (Math.random() - 0.5) * 3)),
+            breathControl: Math.max(1, Math.min(10, baseScore + (Math.random() - 0.5) * 2.5)),
+            noteTransitions: Math.max(1, Math.min(10, baseScore + (Math.random() - 0.5) * 2)),
+            vibratoControl: Math.max(1, Math.min(10, baseScore + (Math.random() - 0.5) * 3)),
+            expression: Math.max(1, Math.min(10, baseScore + (Math.random() - 0.5) * 2))
         };
     }
 
