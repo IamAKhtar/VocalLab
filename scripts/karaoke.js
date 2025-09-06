@@ -18,8 +18,7 @@
       return LRC.parse(txt);
     }
     static parse(text) {
-      const lines = text.split(/?
-/);
+      const lines = text.split(/\r?\n/);
       const out = [];
       const ts = /^\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\](.*)$/;
       for (const line of lines) {
@@ -82,11 +81,17 @@
     }
 
     populateSongs() {
+      console.log('Populating songs:', SONGS);
       this.songSel.innerHTML = '';
       for (const s of SONGS) {
         const opt = document.createElement('option');
-        opt.value = s.id; opt.textContent = `${s.title} — ${s.artist}`;
+        opt.value = s.id; 
+        opt.textContent = `${s.title} — ${s.artist}`;
         this.songSel.appendChild(opt);
+      }
+      // Auto-load first song
+      if (SONGS.length > 0) {
+        this.loadSong();
       }
     }
 
@@ -94,14 +99,23 @@
       const id = this.songSel.value;
       const song = SONGS.find(s => s.id === id);
       if (!song) return;
+      
+      console.log('Loading song:', song);
       this.audio.src = song.audio;
-      this.lrc = await LRC.load(song.lrc);
-      this.loaded = true;
-      this.results.hidden = true;
-      this.lyPrev.textContent = '';
-      this.lyCurr.textContent = 'Ready when you are…';
-      this.lyNext.textContent = this.lrc[0]?.text || '';
-      this.prog.style.width = '0%';
+      
+      try {
+        this.lrc = await LRC.load(song.lrc);
+        this.loaded = true;
+        this.results.hidden = true;
+        this.lyPrev.textContent = '';
+        this.lyCurr.textContent = 'Ready when you are…';
+        this.lyNext.textContent = this.lrc[0]?.text || '';
+        this.prog.style.width = '0%';
+        console.log('Song loaded successfully, LRC lines:', this.lrc.length);
+      } catch (error) {
+        console.error('Error loading song:', error);
+        this.lyCurr.textContent = 'Error loading song. Check console.';
+      }
     }
 
     tick() {
@@ -187,7 +201,6 @@
       }
 
       if (this.energyBuf.length > 3000) this.energyBuf.splice(0, 1500);
-
       this._raf = requestAnimationFrame(() => this.energyLoop());
     }
 
@@ -209,7 +222,7 @@
     mapScore01to10(x) {
       const v = Math.max(0, Math.min(1, x));
       return Math.round((1 + 9 * v) * 10) / 10;
-      }
+    }
 
     score() {
       const lineTimes = this.lrc.map(l => l.t);
@@ -219,13 +232,24 @@
       let i = 0, j = 0;
       while (i < lineTimes.length && j < on.length) {
         const lt = lineTimes[i], ot = on[j];
-        if (Math.abs(ot - lt) <= 1.2) { pairings.push({ lt, ot, err: ot - lt }); i++; j++; }
-        else if (ot < lt) j++; else i++;
+        if (Math.abs(ot - lt) <= 1.2) { 
+          pairings.push({ lt, ot, err: ot - lt }); 
+          i++; j++; 
+        }
+        else if (ot < lt) j++; 
+        else i++;
       }
 
       const absErr = pairings.map(p => Math.abs(p.err));
       const coverage = pairings.length / Math.max(1, lineTimes.length);
-      const med = (arr) => { if (!arr.length) return 1.0; const s = [...arr].sort((a,b)=>a-b); const m = Math.floor(s.length/2); return s.length % 2 ? s[m] : 0.5*(s[m-1]+s[m]); };
+      
+      const med = (arr) => { 
+        if (!arr.length) return 1.0; 
+        const s = [...arr].sort((a,b)=>a-b); 
+        const m = Math.floor(s.length/2); 
+        return s.length % 2 ? s[m] : 0.5*(s[m-1]+s[m]); 
+      };
+      
       const medErr = med(absErr);
       const timing01 = Math.max(0, 1 - (medErr / 0.6));
       const covBoost = Math.min(0.2, Math.max(0, (coverage - 0.5) * 0.4));
@@ -258,6 +282,7 @@
         const mean = seg.reduce((a,b)=>a+b.rms,0) / Math.max(1, seg.length);
         return mean;
       }).filter(x => x > 0);
+      
       const mL = lineWindows.reduce((a,b)=>a+b,0) / Math.max(1, lineWindows.length);
       const vL = lineWindows.reduce((a,b)=>a + Math.pow(b-mL,2),0) / Math.max(1, lineWindows.length);
       const bc01 = Math.max(0, 1 - Math.min(1, Math.sqrt(vL) * 8));
@@ -281,5 +306,8 @@
     }
   }
 
-  window.addEventListener('DOMContentLoaded', () => { new KaraokeApp(); });
+  window.addEventListener('DOMContentLoaded', () => { 
+    console.log('DOM loaded, starting Karaoke app');
+    new KaraokeApp(); 
+  });
 })();
