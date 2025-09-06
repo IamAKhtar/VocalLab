@@ -4,8 +4,8 @@
       id: 'vande_mataram',
       title: 'Vande Mataram (Simple)',
       artist: 'Traditional',
-      audio: '/songs/vande_mataram.mp3',
-      lrc: '/songs/vande_mataram.lrc',
+      audio: 'songs/vande_mataram.mp3',
+      lrc: 'songs/vande_mataram.lrc',
       duration: 30
     }
   ];
