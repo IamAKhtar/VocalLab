@@ -1,12 +1,12 @@
 (() => {
   const SONGS = [
     {
-      id: 'vande_mataram',
-      title: 'Vande Mataram (Simple)',
+      id: 'Aayat',
+      title: 'Aayat',
       artist: 'Traditional',
-      audio: 'songs/vande_mataram.mp3',
-      lrc: 'songs/vande_mataram.lrc',
-      duration: 30
+      audio: 'songs/Aayat.mp3',
+      lrc: 'songs/Aayat.lrc',
+      duration: 230
     }
   ];
 
