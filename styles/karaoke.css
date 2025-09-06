@@ -1,0 +1,30 @@
+:root {
+  --kv-bg: #0f172a;
+  --kv-card: #111827;
+  --kv-accent: #22c55e;
+  --kv-text: #e5e7eb;
+  --kv-sub: #94a3b8;
+  --kv-line: #1f2937;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--kv-bg); color: var(--kv-text); }
+.kv-container { max-width: 860px; margin: 0 auto; padding: 24px; }
+.kv-header h1 { margin: 0 0 8px; }
+.kv-sub { margin: 0 0 24px; color: var(--kv-sub); }
+.kv-picker { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+.kv-picker select { flex: 1; padding: 10px; border-radius: 8px; background: var(--kv-card); color: var(--kv-text); border: 1px solid var(--kv-line); }
+.kv-btn { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--kv-line); background: var(--kv-card); color: var(--kv-text); cursor: pointer; }
+.kv-btn--primary { background: var(--kv-accent); border-color: var(--kv-accent); color: #0a0f1f; font-weight: 600; }
+.kv-player { padding: 16px; border: 1px solid var(--kv-line); border-radius: 12px; background: linear-gradient(180deg, #0b1220, #0a0f1c); }
+.kv-lyrics { min-height: 140px; display: grid; gap: 8px; align-items: center; justify-items: center; margin-bottom: 16px; }
+.kv-lyric { max-width: 720px; text-align: center; opacity: 0.55; color: var(--kv-sub); }
+.kv-lyric--curr { font-size: 26px; opacity: 1; color: var(--kv-text); font-weight: 700; }
+.kv-lyric--prev, .kv-lyric--next { font-size: 18px; }
+.kv-controls { display: flex; gap: 12px; margin-bottom: 8px; }
+.kv-progress { height: 6px; background: #0b1220; border-radius: 999px; overflow: hidden; border: 1px solid var(--kv-line); }
+.kv-progress__bar { height: 100%; width: 0%; background: linear-gradient(90deg, #22c55e, #14b8a6); transition: width .1s linear; }
+.kv-results { margin-top: 20px; }
+.kv-score { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+.kv-score__num { font-size: 40px; font-weight: 800; color: var(--kv-accent); }
+.kv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.kv-card { background: var(--kv-card); border: 1px solid var(--kv-line); border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; }

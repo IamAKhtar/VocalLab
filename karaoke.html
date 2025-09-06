@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Karaoke | VocalMaster</title>
+  <link rel="stylesheet" href="/styles/karaoke.css" />
+</head>
+<body>
+  <main class="kv-container">
+    <header class="kv-header">
+      <h1>VocalMaster Karaoke</h1>
+      <p class="kv-sub">Pick a song, see timed lyrics, sing along, and get a fair score.</p>
+    </header>
+
+    <section class="kv-picker">
+      <label for="songSelect">Song</label>
+      <select id="songSelect"></select>
+      <button id="loadSongBtn" class="kv-btn">Load</button>
+    </section>
+
+    <section class="kv-player">
+      <div class="kv-lyrics" id="lyricsBox">
+        <div id="lyricsPrev" class="kv-lyric kv-lyric--prev"></div>
+        <div id="lyricsCurr" class="kv-lyric kv-lyric--curr"></div>
+        <div id="lyricsNext" class="kv-lyric kv-lyric--next"></div>
+      </div>
+
+      <div class="kv-controls">
+        <button id="playBtn" class="kv-btn">Play</button>
+        <button id="recBtn" class="kv-btn kv-btn--primary">Start Recording</button>
+        <button id="stopBtn" class="kv-btn" disabled>Stop</button>
+      </div>
+
+      <div class="kv-progress">
+        <div id="progBar" class="kv-progress__bar"></div>
+      </div>
+
+      <audio id="backing" preload="metadata"></audio>
+    </section>
+
+    <section class="kv-results" id="results" hidden>
+      <h2>Your Karaoke Score</h2>
+      <div class="kv-score">
+        <div class="kv-score__num" id="overallScore">--</div>
+        <div class="kv-score__label">/ 100</div>
+      </div>
+
+      <div class="kv-grid">
+        <div class="kv-card"><span>Rhythm & Timing</span><b id="rtScore">--</b></div>
+        <div class="kv-card"><span>Pitch Stability</span><b id="psScore">--</b></div>
+        <div class="kv-card"><span>Vocal Clarity</span><b id="vcScore">--</b></div>
+        <div class="kv-card"><span>Dynamic Range</span><b id="drScore">--</b></div>
+        <div class="kv-card"><span>Breath Control</span><b id="bcScore">--</b></div>
+        <div class="kv-card"><span>Note Transitions</span><b id="ntScore">--</b></div>
+      </div>
+
+      <p class="kv-tip">Tip: Aim to enter each lyric line within ±150 ms of the highlight for higher timing scores.</p>
+    </section>
+  </main>
+
+  <script src="/scripts/karaoke.js"></script>
+</body>
+</html>
